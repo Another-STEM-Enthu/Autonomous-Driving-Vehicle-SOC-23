@@ -18,13 +18,10 @@ import argparse
 TIMESTEPS = 1000
 FPS = 30
 NUM_EPISODES = 10
-
 class Task1():
 
     def __init__(self):
-        """
-        Can modify to include variables as required
-        """
+
 
         super().__init__()
 
@@ -34,14 +31,15 @@ class Task1():
         Output: Action to be taken
         TO BE FILLED
         """
-        print(state)
 
         # Replace with your implementation to determine actions to be taken
-        action_steer = None
-        action_acc = None
+        if(state[0] < 1 ):
+            action_steer = 2
+        else:
+            action_steer = 1
+        action_acc = 3
 
         action = np.array([action_steer, action_acc])  
-
         return action
 
     def controller_task1(self, config_filepath=None, render_mode=False):
@@ -96,10 +94,10 @@ class Task1():
                 if terminate:
                     road_status = reached_road
                     break
+                print("x= ",state[0]," y= ",state[1],"\treward= ",reward)
 
             # Writing the output at each episode to STDOUT
             print(str(road_status) + ' ' + str(cur_time))
-
 class Task2():
 
     def __init__(self):
@@ -119,8 +117,12 @@ class Task2():
         """
 
         # Replace with your implementation to determine actions to be taken
-        action_steer = None
-        action_acc = None
+        if(state[0] < 1 ):
+            action_steer = 2
+        else:
+            action_steer = 1
+        action_acc = 3
+
 
         action = np.array([action_steer, action_acc])  
 
@@ -214,6 +216,7 @@ class Task2():
                 if terminate:
                     road_status = reached_road
                     break
+                print("x= ",state[0]," y= ",state[1],"\treward= ",reward)
 
             print(str(road_status) + ' ' + str(cur_time))
 
