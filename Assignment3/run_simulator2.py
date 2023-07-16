@@ -17,23 +17,34 @@ import numpy as np
 
 # Do NOT change these values
 TIMESTEPS = 1000
-FPS = 100
+FPS = 5
 NUM_EPISODES = 500
 alpha = 1
 gamma = 0.999
-N_boxes = 2
+N_boxes = 3
 N_velo_states = 8
-QSA0 = [[[0.0 for p in range(0,3)] for q in range(N_velo_states)] for r in range(N_boxes)]
-QSA1 = [[[0.0 for p in range(0,5)] for q in range(N_velo_states)] for r in range(N_boxes)]
+epsilon = -0.1
+qsa0 = [[[0.0 for p in range(0,3)] for q in range(N_velo_states)] for r in range(N_boxes)]
+qsa1 = [[[0.0 for p in range(0,5)] for q in range(N_velo_states)] for r in range(N_boxes)]
 
 for q in range(N_boxes):
     for r in range(N_velo_states):
-        QSA1[q][r][4] = 500
+        qsa1[q][r][0] = 100*random.random()   
+        qsa1[q][r][1] = 100*random.random()   
+        qsa1[q][r][2] = 100*random.random()   
+        qsa1[q][r][3] = 100*random.random()   
+        qsa1[q][r][4] = 500   
 
-# for q in range(N_boxes):
-#     for r in range(N_velo_states):
-#         QSA0[q][r][1] = 10
-#         QSA0[q][r][2] = 5
+for q in range(N_boxes):
+    for r in range(N_velo_states):
+        qsa0[q][r][1] = 100*random.random()   
+        qsa0[q][r][2] = 100*random.random()  
+        qsa0[q][r][0] = 100*random.random()  
+
+qsa0[0][1][1] = 100
+qsa0[1][6][1] = 100
+qsa0[2][0][1] = 100
+
 
 
 class Task1():
@@ -43,6 +54,7 @@ class Task1():
 
         super().__init__()
     def getState(self,state):
+        global qsa0,qsa1,epsilon,gamma,alpha
         # X = int(math.floor(state[0]/100.0)) + 5
         # Y = int(math.floor(state[1]/100.0)) + 5
         # s_box = X*10 + Y 
@@ -51,51 +63,60 @@ class Task1():
         if(state[2]>0):
             moving = 1
         angle = 0
-        if(state[3]<=90):
+        if(state[3]<=45):
             angle = 0
-        elif(state[3]<=180):
+        elif(state[3]<=90):
             angle = 1
-        elif(state[3]<=270):
+        elif(state[3]<=135):
             angle = 2
-        else:
+        elif(state[3]<=180):
             angle = 3
-        s_velo = angle + moving * 4
+        elif(state[3]<=225):
+            angle = 4
+        elif(state[3]<=270):
+            angle = 5
+        elif(state[3]<=315):
+            angle = 6
+        else:
+            angle = 7
+        s_velo = angle #+ moving * 8
 
         s_box = 0
-        if(state[1]>-50 and state[1]<50):
+        # if(state[0]>250):
+        #     s_box = 1
+        # with the above two lines, the car is learning to turn towards to the right correctly and move horizontally. now we need to adjust vertical height of horiz motion 
+
+        if(state[1]>-110 and state[1]<80):
+            s_box = 2
+        elif(state[1]<150):
             s_box = 1
-        # if(state[1]>-30 and state[1]<30):
-        #     if(state[0]>0):
-        #         s_box = 2
         else:
             s_box = 0
-            
 
-        # print(X,"\t",Y,"\t",s_box)
+
+        # print( s_box," ",int(state[0])," ",int(state[1]) )
 
         return s_box,s_velo
 
     def next_action(self, state):
+        global qsa0,qsa1,epsilon,gamma,alpha
         sbox,svelo = self.getState(state)
-        q0_fordiff_a = QSA0[sbox][svelo]
-        q1_fordiff_a = QSA1[sbox][svelo]
-        action_steer = q0_fordiff_a.index(max(q0_fordiff_a))
-        action_acc = q1_fordiff_a.index(max(q1_fordiff_a))
-        # if(state[3]>270):
-        #     action_steer = 1
+        action_steer,action_acc = 0, 0
 
-        # if(state[2]<1):
-        #     action_acc = 4
-        # elif(state[2]>1 and state[2] < 3):
-        #     action_acc = 3
-        # elif(state[2] > 6):
-        #     action_acc = 1
-        # elif(state[2] > 7):
-        #     action_acc = 0
+        if(random.random()>epsilon):
+            q0_fordiff_a = qsa0[sbox][svelo]
+            q1_fordiff_a = qsa1[sbox][svelo]
+            action_steer = q0_fordiff_a.index(max(q0_fordiff_a))
+            action_acc = q1_fordiff_a.index(max(q1_fordiff_a))
+        else:
+            action_steer = np.random.randint(low = 0, high = 3, dtype = int)
+            action_acc = np.random.randint(low = 3, high = 5, dtype = int)
         action = np.array([action_steer, action_acc])  
         return action
 
     def controller_task1(self, config_filepath=None, render_mode=False):
+        global qsa0,qsa1,epsilon,gamma,alpha
+
         """
         This is the main controller function. You can modify it as required except for the parts specifically not to be modified.
         Additionally, you can define helper functions within the class if needed for your logic.
@@ -110,7 +131,7 @@ class Task1():
 
         simulator = DrivingEnv('T1', render_mode=render_mode, config_filepath=config_filepath)
 
-        time.sleep(3)
+        time.sleep(2)
         ##############################################
 #Ideation:
 ################################################################################
@@ -118,7 +139,7 @@ class Task1():
 #Q_S_A_0 for steering and Q_S_A_1 for acceleration i.e. 400*3 and 400*5
 ################################################################################
 
-
+        
         # e is the number of the current episode, running it for 10 episodes
         for e in range(NUM_EPISODES):
         
@@ -133,7 +154,10 @@ class Task1():
             # Variable representing if you have reached the road
             road_status = False
             ##############################################
-            
+            if(e>0):
+                epsilon = 0.1
+
+
             sbox,svelo = self.getState(state)
             action = self.next_action(state)
 
@@ -157,8 +181,8 @@ class Task1():
 
                 sbox_,svelo_ = self.getState(state)
                 action_ = self.next_action(state)
-                QSA0[sbox][svelo][action[0]] = QSA0[sbox][svelo][action[0]] + alpha*(reward + gamma*QSA0[sbox_][svelo_][action_[0]] - QSA0[sbox][svelo][action[0]])
-                QSA1[sbox][svelo][action[1]] = QSA1[sbox][svelo][action[1]] + alpha*(reward + gamma*QSA1[sbox_][svelo_][action_[1]] - QSA1[sbox][svelo][action[1]])
+                qsa0[sbox][svelo][action[0]] = qsa0[sbox][svelo][action[0]] + alpha*(reward + gamma*qsa0[sbox_][svelo_][action_[0]] - qsa0[sbox][svelo][action[0]])
+                qsa1[sbox][svelo][action[1]] = qsa1[sbox][svelo][action[1]] + alpha*(reward + gamma*qsa1[sbox_][svelo_][action_[1]] - qsa1[sbox][svelo][action[1]])
                 cur_time += 1
 
                 sbox,svelo = sbox_,svelo_
@@ -174,7 +198,13 @@ class Task1():
                 # print("x= ",state[0]," y= ",state[1],"\t\t",state[3],"\t\t")
 
             # Writing the output at each episode to STDOUT
-            print(e,"\t",str(road_status) ,"\t",str(cur_time),"\t",QSA0)
+            print(e,"\t",str(road_status) ,"\t",str(cur_time))
+            if(e%30 == 0):
+                print(qsa0,"\t",qsa1)
+        print(qsa0)
+        print(qsa1)
+
+
 class Task2():
 
     def __init__(self):
@@ -218,8 +248,8 @@ class Task2():
 
     def next_action(self, state):
         sbox,svelo = self.getState(state)
-        q0_fordiff_a = QSA0[sbox][svelo]
-        q1_fordiff_a = QSA1[sbox][svelo]
+        q0_fordiff_a = qsa0[sbox][svelo]
+        q1_fordiff_a = qsa1[sbox][svelo]
         action_steer = q0_fordiff_a.index(max(q0_fordiff_a))
         action_acc = q1_fordiff_a.index(max(q1_fordiff_a))
         # if(state[3]>270):
@@ -322,8 +352,8 @@ class Task2():
                 fpsClock.tick(FPS)
                 sbox_,svelo_ = self.getState(state)
                 action_ = self.next_action(state)
-                QSA0[sbox][svelo][action[0]] = QSA0[sbox][svelo][action[0]] + alpha*(reward + gamma*QSA0[sbox_][svelo_][action_[0]] - QSA0[sbox][svelo][action[0]])
-                QSA1[sbox][svelo][action[1]] = QSA1[sbox][svelo][action[1]] + alpha*(reward + gamma*QSA1[sbox_][svelo_][action_[1]] - QSA1[sbox][svelo][action[1]])
+                qsa0[sbox][svelo][action[0]] = qsa0[sbox][svelo][action[0]] + alpha*(reward + gamma*qsa0[sbox_][svelo_][action_[0]] - qsa0[sbox][svelo][action[0]])
+                qsa1[sbox][svelo][action[1]] = qsa1[sbox][svelo][action[1]] + alpha*(reward + gamma*qsa1[sbox_][svelo_][action_[1]] - qsa1[sbox][svelo][action[1]])
                 cur_time += 1
 
                 sbox,svelo = sbox_,svelo_

@@ -21,8 +21,8 @@ FPS = 100
 NUM_EPISODES = 500
 alpha = 1
 gamma = 0.999
-N_boxes = 2
-N_velo_states = 8
+N_boxes = 4
+N_velo_states = 16
 QSA0 = [[[0.0 for p in range(0,3)] for q in range(N_velo_states)] for r in range(N_boxes)]
 QSA1 = [[[0.0 for p in range(0,5)] for q in range(N_velo_states)] for r in range(N_boxes)]
 
@@ -30,10 +30,10 @@ for q in range(N_boxes):
     for r in range(N_velo_states):
         QSA1[q][r][4] = 500
 
-# for q in range(N_boxes):
-#     for r in range(N_velo_states):
-#         QSA0[q][r][1] = 10
-#         QSA0[q][r][2] = 5
+for q in range(N_boxes):
+    for r in range(N_velo_states):
+        QSA0[q][r][1] = 0   
+        QSA0[q][r][0] = 10
 
 
 class Task1():
@@ -51,24 +51,35 @@ class Task1():
         if(state[2]>0):
             moving = 1
         angle = 0
-        if(state[3]<=90):
+        if(state[3]<=45):
             angle = 0
-        elif(state[3]<=180):
+        elif(state[3]<=90):
             angle = 1
-        elif(state[3]<=270):
+        elif(state[3]<=135):
             angle = 2
-        else:
+        elif(state[3]<=180):
             angle = 3
-        s_velo = angle + moving * 4
+        elif(state[3]<=225):
+            angle = 4
+        elif(state[3]<=270):
+            angle = 5
+        elif(state[3]<=315):
+            angle = 6
+        else:
+            angle = 7
+        s_velo = angle + moving * 8
 
         s_box = 0
-        if(state[1]>-50 and state[1]<50):
+        if(state[1]>-50 and state[1]<50 and state[0]<250):
+            s_box = 2
+        if(state[0]>250):
             s_box = 1
+        if(state[1]>-50 and state[1]<50 and state[0] > 250):
+            s_box = 3
         # if(state[1]>-30 and state[1]<30):
         #     if(state[0]>0):
         #         s_box = 2
-        else:
-            s_box = 0
+
             
 
         # print(X,"\t",Y,"\t",s_box)

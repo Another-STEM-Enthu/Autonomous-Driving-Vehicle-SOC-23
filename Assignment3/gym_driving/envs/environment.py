@@ -56,9 +56,10 @@ class Environment:
         self.acc_space = [i for i in self.param_dict['acc_action']]
 
         if self.task == 'T1':
+            # start_x = random.randint(170, 350)
+            # start_y = random.randint(-65, 115)
             start_x = random.randint(-300, 300)
             start_y = random.randint(-300, 300)
-
         else:
             start_x, start_y = random.choice(eligible_list)
 
@@ -191,17 +192,17 @@ class Environment:
         reached_ice = False
 
         if ((done_ice and not done_icegrass) or done_dirt) and (not done_road):
-            reward = -100
+            reward = -1000000000000000000000000000000000000000
             terminate = True
             reached_ice = True
 
         if done_road:
-            reward = 100
+            reward = 1000000000000000000000000000000000000000
             terminate = True
             reached_road = True
         
         else:
-            reward = -1
+            reward = 0
 
         if render_mode or (render_mode is None and self.render_mode):
             self.render()
